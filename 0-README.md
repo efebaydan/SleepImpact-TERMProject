@@ -1,6 +1,7 @@
 # SleepImpact-TERMProject
 
 ## Project Overview
+
 In this project, I will investigate the effects of daily caffeine consumption, social media usage, cigarette smoking, and step count on the time taken to fall asleep and overall sleep quality. The sleep data will be sourced from the Sleep Cycle app, social media usage from the iPhone's Focus Time feature, and daily step count from Apple Health. Additionally, sleep quality will be measured using both my subjective assessments and objective data from Sleep Cycle. The goal is to analyze how lifestyle habits impact sleep, using a scientific and data-driven approach to develop strategies for improving sleep quality.
 
 ## Objectives
@@ -16,6 +17,7 @@ In this project, I will investigate the effects of daily caffeine consumption, s
   
 - **Application of Data Science Skills:**  
   Apply the theoretical knowledge and techniques I have learned by testing them on real-world data to improve my data analysis and visualization skills.
+  
 
 ## Motivation
 
@@ -27,7 +29,6 @@ In this project, I will investigate the effects of daily caffeine consumption, s
   
 - **Practical Application:**  
   Collecting and analyzing data using the technologies I use daily (Sleep Cycle, iPhone Focus Time, Apple Health) and providing actionable insights makes this project both engaging and practical.
-  
 
 ## Dataset
 
@@ -37,7 +38,8 @@ In this project, I will investigate the effects of daily caffeine consumption, s
 - **Cigarettes:** Daily number of cigarettes smoked  
 - **Step Count:** Daily step count from Apple Health  
 - **Sleep Onset Time (minutes):** The time taken to fall asleep  
-- **Sleep Quality:** Both subjective evaluation (on a scale of 1-10) and objective sleep quality data from Sleep Cycle  
+- **Sleep Quality:** Both subjective evaluation (on a scale of 1-10) and objective sleep quality data from Sleep Cycle
+    
 
 *Note: Any anomalies (e.g., illness, unusual routine changes) will be noted and flagged for review before analysis.*
 
@@ -50,23 +52,41 @@ In this project, I will investigate the effects of daily caffeine consumption, s
 
 ## Analysis Plan
 
-1. **Data Collection and Preparation:**  
+1. **Data Collection and Preparation:**
+   
    - Gather daily data from the relevant sources (Sleep Cycle, iPhone, Apple Health) and import it into a Pandas DataFrame.  
    - Identify and standardize missing or inconsistent data.
-   - 
-2. **Visualization:**  
-   - Create interactive charts to illustrate the relationships between caffeine consumption, social media usage, cigarette smoking, step count, and both sleep onset time and sleep quality.  
+     
+2. **Visualization:**
+   
+   - Create interactive charts to illustrate the relationships between caffeine consumption, social media usage, cigarette smoking, step count, and both sleep onset time and sleep quality.
    - For example, a scatter plot visualizing the relationship between caffeine consumption and time taken to fall asleep.
-   - 
-3. **Hypothesis Testing:**  
+     
+3. **Hypothesis Testing:**
+   
    - **H₀:** Daily habits have no effect on sleep onset time and sleep quality.  
    - **Hₐ:** Specific daily habits (e.g., high caffeine or intense social media usage) significantly affect sleep onset time and sleep quality.  
    - Test these hypotheses using regression analysis and other statistical tests with Statsmodels and scikit-learn.
-4. **Trend Analysis:**  
+     
+4. **Trend Analysis:**
+   
    - Investigate changes in sleep onset time and sleep quality over time.  
    - For example, analyze the impact of increases or decreases in social media usage on sleep quality.
+     
+
+## Example Analysis
+
+To illustrate, I will create a scatter plot to visualize the relationship between daily caffeine consumption and sleep onset time. On the x-axis, I will plot the daily caffeine intake (in mg), and on the y-axis, the time taken to fall asleep (in minutes). If there is a clear upward trend, it may indicate a strong correlation between higher caffeine intake and a longer time to fall asleep.
+
+Another example involves examining days with high cigarette consumption versus days with no or low cigarette consumption to see whether there is a noticeable difference in subjective or objective sleep quality. This could reveal how nicotine intake affects overall restfulness.
+
+Similarly, I will look at variations in social media usage. By comparing days with heavy social media activity (e.g., multiple hours) against days with minimal usage, I can observe whether higher screen time correlates with later bedtimes or decreased sleep quality. 
+
+Lastly, step count trends will be analyzed to see if increases or decreases in daily physical activity align with improvements in sleep onset time or subjective sleep ratings. For instance, if days with higher step counts consistently show better sleep quality, it might suggest that physical activity is a key factor in improving rest.
+
 
 ## Conclusion
+
 By the end of this project, I aim to answer the following questions:
 
 - Which daily habits have the greatest impact on sleep onset time and overall sleep quality?

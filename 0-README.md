@@ -45,10 +45,11 @@ In this project, I will investigate the effects of daily caffeine consumption, s
 
 ## Tools and Technologies
 
-- **Python:** For data cleaning, analysis, and statistical testing  
-- **Pandas:** For data manipulation and preprocessing  
-- **Plotly / Bokeh / Altair:** For creating interactive visualizations  
-- **Statsmodels / scikit-learn:** For regression analysis, hypothesis testing, and predictive modeling  
+- **Python:** Primary language for data analysis and automation  
+- **Pandas:** For data cleaning, manipulation, and preprocessing  
+- **Matplotlib and Seaborn:** For creating visualizations such as scatter plots, heatmaps, and time series  
+- **SciPy:** For hypothesis testing and regression analysis  
+- **Jupyter Notebooks or JupyterLab:** For an interactive environment to write, run, and document code  
 
 ## Analysis Plan
 

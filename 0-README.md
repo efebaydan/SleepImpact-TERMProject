@@ -49,7 +49,7 @@ In this project, I will investigate the effects of daily caffeine consumption, s
 - **Pandas:** For data cleaning, manipulation, and preprocessing  
 - **Matplotlib and Seaborn:** For creating visualizations such as scatter plots, heatmaps, and time series  
 - **SciPy:** For hypothesis testing and regression analysis  
-- **Jupyter Notebooks or JupyterLab:** For an interactive environment to write, run, and document code  
+- **Jupyter Notebooks :** For an interactive environment to write, run, and document code  
 
 ## Analysis Plan
 

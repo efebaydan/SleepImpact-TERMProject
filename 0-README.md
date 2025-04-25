@@ -1,98 +1,141 @@
-# SleepImpact-TERMProject
+# ============================================================
+# SleepImpact  –  Full Analysis Script
+# ============================================================
+# 0. Imports
+# ------------------------------------------------------------
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import pearsonr, spearmanr, ttest_ind
+import statsmodels.api as sm
+import os
 
-## Project Overview
+plt.rcParams["figure.dpi"] = 110           # clearer plots
 
-In this project, I will investigate the effects of daily caffeine consumption, social media usage, cigarette smoking, and step count on the time taken to fall asleep and overall sleep quality. The sleep data will be sourced from the Sleep Cycle app, social media usage from the iPhone's Focus Time feature, and daily step count from Apple Health. Additionally, sleep quality will be measured using both my subjective assessments and objective data from Sleep Cycle. The goal is to analyze how lifestyle habits impact sleep, using a scientific and data-driven approach to develop strategies for improving sleep quality.
+# ------------------------------------------------------------
+# 1. Load & initial clean-up
+# ------------------------------------------------------------
+FILE = "dsa 210 term project (2).xlsx"     # <- adjust if needed
+df   = pd.read_excel(FILE)
 
-## Objectives
+df.columns = df.columns.str.strip()
+df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 
-- **Sleep Performance Relationship:**  
-  Determine the impact of daily caffeine consumption, social media usage, cigarette smoking, and step count on sleep onset time and overall sleep quality.
-  
-- **Identification of Key Variables:**  
-  Identify the factors that most significantly affect sleep quality and propose lifestyle adjustments focusing on these key variables.
-  
-- **Data-Driven Optimization:**  
-  Based on the collected data, develop recommendations to optimize sleep patterns and enhance overall quality of life.
-  
-- **Application of Data Science Skills:**  
-  Apply the theoretical knowledge and techniques I have learned by testing them on real-world data to improve my data analysis and visualization skills.
-  
+num_cols = [
+    "Caffeine (mg)", "Social Media Usage (minutes)",
+    "Cigarettes", "Step Count",
+    "Sleep Onset Time (minutes)", "Sleep Quality"
+]
+df[num_cols] = df[num_cols].apply(pd.to_numeric, errors="coerce")
 
-## Motivation
+# drop user-flagged anomaly days if an “Anomaly” column exists
+if "Anomaly" in df.columns:
+    df = df[df["Anomaly"].isna()]
 
-- **Personal Growth:**  
-  Sleep is crucial for daily performance and overall health. By understanding which habits affect my sleep quality, I aim to improve my lifestyle.
-  
-- **Scientific Approach:**  
-  I want my decision-making process to be more objective and data-driven. This project will support subjective perceptions with unbiased measurements to yield clear outcomes.
-  
-- **Practical Application:**  
-  Collecting and analyzing data using the technologies I use daily (Sleep Cycle, iPhone Focus Time, Apple Health) and providing actionable insights makes this project both engaging and practical.
+# fill numeric gaps with column means
+df[num_cols] = df[num_cols].fillna(df[num_cols].mean(numeric_only=True))
 
-## Dataset
+# ------------------------------------------------------------
+# 2. Feature engineering / enrichment
+# ------------------------------------------------------------
+# scale fixes
+df["Steps_k"]     = df["Step Count"] / 1_000                        # steps in thousands
+df["SleepOnset_h"] = df["Sleep Onset Time (minutes)"] / 60          # minutes → hours
 
-- **Date:** The specific record date  
-- **Caffeine (mg):** Daily caffeine consumption  
-- **Social Media Usage (minutes):** Daily social media usage duration measured via the iPhone’s Focus Time  
-- **Cigarettes:** Daily number of cigarettes smoked  
-- **Step Count:** Daily step count from Apple Health  
-- **Sleep Onset Time (minutes):** The time taken to fall asleep  
-- **Sleep Quality:** Both subjective evaluation (on a scale of 1-10) and objective sleep quality data from Sleep Cycle
-    
+# caffeine dose per kg (if weight info exists)
+if "Weight" in df.columns:
+    df["Caf_per_kg"] = df["Caffeine (mg)"] / df["Weight"]
 
-*Note: Any anomalies (e.g., illness, unusual routine changes) will be noted and flagged for review before analysis.*
+# caffeine bucket (Low / Med / High by terciles)
+df["Caf_Level"] = pd.qcut(df["Caffeine (mg)"],
+                          q=[0, .33, .66, 1.0],
+                          labels=["Low", "Med", "High"])
 
-## Tools and Technologies
+# high-screen dummy (top 25 %)
+q75 = df["Social Media Usage (minutes)"].quantile(.75)
+df["SM_High"] = (df["Social Media Usage (minutes)"] >= q75).astype(int)
 
-- **Python:** Primary language for data analysis and automation  
-- **Pandas:** For data cleaning, manipulation, and preprocessing  
-- **Matplotlib and Seaborn:** For creating visualizations such as scatter plots, heatmaps, and time series  
-- **SciPy:** For hypothesis testing and regression analysis  
-- **Jupyter Notebooks :** For an interactive environment to write, run, and document code  
+# z-scores for numeric predictors
+for col in ["Caffeine (mg)", "Social Media Usage (minutes)",
+            "Cigarettes", "Step Count"]:
+    df[col + "_z"] = (df[col] - df[col].mean()) / df[col].std()
 
-## Analysis Plan
+# 7-day rolling mean of sleep-onset (minutes)
+df = df.sort_values("Date")
+df["SleepOnset_7d_avg"] = (df["Sleep Onset Time (minutes)"]
+                           .rolling(window=7, min_periods=1).mean())
 
-1. **Data Collection and Preparation:**
-   
-   - Gather daily data from the relevant sources (Sleep Cycle, iPhone, Apple Health) and import it into a Pandas DataFrame.  
-   - Identify and standardize missing or inconsistent data.
-     
-2. **Visualization:**
-   
-   - Create interactive charts to illustrate the relationships between caffeine consumption, social media usage, cigarette smoking, step count, and both sleep onset time and sleep quality.
-   - For example, a scatter plot visualizing the relationship between caffeine consumption and time taken to fall asleep.
-     
-3. **Hypothesis Testing:**
-   
-   - **H₀:** Daily habits have no effect on sleep onset time and sleep quality.  
-   - **Hₐ:** Specific daily habits (e.g., high caffeine or intense social media usage) significantly affect sleep onset time and sleep quality.  
-   - Test these hypotheses using regression analysis and other statistical tests with Statsmodels and scikit-learn.
-     
-4. **Trend Analysis:**
-   
-   - Investigate changes in sleep onset time and sleep quality over time.  
-   - For example, analyze the impact of increases or decreases in social media usage on sleep quality.
-     
+# weekend indicator
+df["IsWeekend"] = (df["Date"].dt.weekday >= 5).astype(int)
 
-## Example Analysis
+print("Feature-engineered columns:", df.columns[-10:].tolist())
 
-To illustrate, I will create a scatter plot to visualize the relationship between daily caffeine consumption and sleep onset time. On the x-axis, I will plot the daily caffeine intake (in mg), and on the y-axis, the time taken to fall asleep (in minutes). If there is a clear upward trend, it may indicate a strong correlation between higher caffeine intake and a longer time to fall asleep.
+# ------------------------------------------------------------
+# 3. Exploratory Data Analysis (EDA)
+# ------------------------------------------------------------
+print("\n=== Descriptive statistics ===")
+print(df.describe(include='all').T)
 
-Another example involves examining days with high cigarette consumption versus days with no or low cigarette consumption to see whether there is a noticeable difference in subjective or objective sleep quality. This could reveal how nicotine intake affects overall restfulness.
+plt.figure(figsize=(9,7))
+sns.heatmap(df[num_cols].corr(), annot=True, cmap="coolwarm", linewidths=.5)
+plt.title("Correlation matrix"); plt.tight_layout(); plt.show()
 
-Similarly, I will look at variations in social media usage. By comparing days with heavy social media activity (e.g., multiple hours) against days with minimal usage, I can observe whether higher screen time correlates with later bedtimes or decreased sleep quality. 
+def scatter(x, y, **kw):
+    plt.figure(figsize=(8,6))
+    sns.scatterplot(x=x, y=y, data=df, **kw)
+    plt.xlabel(x); plt.ylabel(y); plt.title(f"{x} vs {y}")
+    plt.tight_layout(); plt.show()
 
-Lastly, step count trends will be analyzed to see if increases or decreases in daily physical activity align with improvements in sleep onset time or subjective sleep ratings. For instance, if days with higher step counts consistently show better sleep quality, it might suggest that physical activity is a key factor in improving rest.
+scatter("Caffeine (mg)", "Sleep Onset Time (minutes)")
+scatter("Social Media Usage (minutes)", "Sleep Onset Time (minutes)")
+scatter("Cigarettes", "Sleep Quality")
+scatter("Step Count", "Sleep Quality")
 
+# sleep trend line
+plt.figure(figsize=(10,6))
+plt.plot(df["Date"], df["Sleep Quality"], marker="o", label="Sleep Quality")
+plt.plot(df["Date"], df["SleepOnset_7d_avg"], marker="s", label="Sleep Onset 7-day avg (min)")
+plt.legend(); plt.xticks(rotation=45); plt.title("Sleep metrics over time")
+plt.tight_layout(); plt.show()
 
-## Conclusion
+# ------------------------------------------------------------
+# 4. Hypothesis testing
+# ------------------------------------------------------------
+targets    = ["Sleep Onset Time (minutes)", "Sleep Quality"]
+predictors = ["Caffeine (mg)", "Social Media Usage (minutes)",
+              "Cigarettes", "Step Count"]
 
-By the end of this project, I aim to answer the following questions:
+print("\n=== Pearson & Spearman tests ===")
+for tgt in targets:
+    for pred in predictors:
+        r, p  = pearsonr(df[pred], df[tgt])
+        ρ, p2 = spearmanr(df[pred], df[tgt])
+        print(f"{pred:30} → {tgt:27}  Pearson r={r:6.3f}  p={p:.3f} | Spearman ρ={ρ:6.3f}  p={p2:.3f}")
 
-- Which daily habits have the greatest impact on sleep onset time and overall sleep quality?
-- Can small, data-driven modifications lead to noticeable improvements in sleep quality?
-- Are there significant differences in the impact of social media usage versus caffeine consumption on sleep?
-- How can these findings be translated into practical strategies for improving sleep patterns and overall quality of life?
+# two-sample t-test (high vs low caffeine) on sleep onset
+median_caf = df["Caffeine (mg)"].median()
+hi_onset   = df[df["Caffeine (mg)"] >= median_caf]["Sleep Onset Time (minutes)"]
+lo_onset   = df[df["Caffeine (mg)"] <  median_caf]["Sleep Onset Time (minutes)"]
+t_stat, p_val = ttest_ind(hi_onset, lo_onset, equal_var=False)
+print(f"\nT-test: high vs low caffeine — sleep onset  t={t_stat:.2f}, p={p_val:.3f}")
 
-*This project not only aims to enhance sleep quality but also to demonstrate the benefits of data-driven decision making in everyday life.*
+# ------------------------------------------------------------
+# 5. Multiple regression (Sleep Onset) with engineered features
+# ------------------------------------------------------------
+X = df[["Caffeine (mg)", "Social Media Usage (minutes)",
+        "Cigarettes", "Step Count", "IsWeekend"]]
+X = sm.add_constant(X)
+y = df["Sleep Onset Time (minutes)"]
+
+model = sm.OLS(y, X).fit()
+print("\n=== Multiple regression summary ===")
+print(model.summary())
+
+# ------------------------------------------------------------
+# 6. Export artefacts (optional)
+# ------------------------------------------------------------
+df.to_csv("sleepimpact_processed.csv", index=False)
+df[num_cols].corr().to_csv("sleepimpact_corr_matrix.csv")
+print("\nOutput saved: sleepimpact_processed.csv & sleepimpact_corr_matrix.csv")
+print("Working dir :", os.getcwd())

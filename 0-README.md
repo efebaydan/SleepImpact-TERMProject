@@ -106,16 +106,5 @@ A logistic regression model was trained to predict whether sleep quality was “
 
 ---
 
-## How to Run
-1. Install required packages:  
-   `pip install -r requirements.txt`
-2. Place your data Excel file in the project directory.
-3. Run the script:  
-   `python main.py`  
-   or, open and run all cells in `Machine Learning.ipynb` (if available).
 
-**Requirements:**  
-pandas, numpy, matplotlib, seaborn, scipy, statsmodels, scikit-learn, openpyxl
-
----
 

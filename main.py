@@ -1,32 +1,30 @@
-# ============================================================
-# 0 — IMPORTS
-# ============================================================
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import pearsonr, spearmanr, linregress, ttest_ind
 import statsmodels.api as sm
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix
 import os
 
-plt.rcParams["figure.dpi"] = 110           # sharper plots
+plt.rcParams["figure.dpi"] = 110  # Sharper plots
 
 # ============================================================
 # 1 — LOAD & CLEAN DATA
 # ============================================================
-FILE = "dsa 210 term project (2).xlsx"      # <-- update path/name if needed
-df   = pd.read_excel(FILE)
+FILE = "dsa 210 term project (2).xlsx"  # <-- Update path/name if needed
+df = pd.read_excel(FILE)
 
-df.columns = df.columns.str.strip()         # remove stray spaces
-df["Date"] = pd.to_datetime(df["Date"])     # parse date column
+df.columns = df.columns.str.strip()  # Remove stray spaces
+df["Date"] = pd.to_datetime(df["Date"])  # Parse date column
 
 num_cols = [
     "Caffeine (mg)", "Social Media Usage (minutes)", "Cigarettes",
     "Step Count", "Sleep Onset Time (minutes)", "Sleep Quality"
 ]
 df[num_cols] = df[num_cols].apply(pd.to_numeric, errors="coerce")
-
-# Fill missing numeric values with the column mean
 df[num_cols] = df[num_cols].fillna(df[num_cols].mean(numeric_only=True))
 
 print(f">> Shape: {df.shape},  Missing numeric cells filled.")
@@ -71,8 +69,7 @@ scatter("Step Count", "Sleep Quality",
 # Time series of sleep metrics
 plt.figure(figsize=(10, 6))
 plt.plot(df["Date"], df["Sleep Quality"], marker="o", label="Sleep Quality")
-plt.plot(df["Date"], df["Sleep Onset Time (minutes)"], marker="s",
-         label="Sleep Onset (min)")
+plt.plot(df["Date"], df["Sleep Onset Time (minutes)"], marker="s", label="Sleep Onset (min)")
 plt.title("Sleep Metrics Over Time")
 plt.xlabel("Date")
 plt.legend()
@@ -83,9 +80,8 @@ plt.show()
 # ============================================================
 # 4 — HYPOTHESIS TESTING
 # ============================================================
-targets    = ["Sleep Onset Time (minutes)", "Sleep Quality"]
-predictors = ["Caffeine (mg)", "Social Media Usage (minutes)",
-              "Cigarettes", "Step Count"]
+targets = ["Sleep Onset Time (minutes)", "Sleep Quality"]
+predictors = ["Caffeine (mg)", "Social Media Usage (minutes)", "Cigarettes", "Step Count"]
 
 print("\n=== Pearson & Spearman Correlation Tests ===")
 for tgt in targets:
@@ -98,15 +94,14 @@ for tgt in targets:
 # Example t-test: high vs low caffeine on sleep onset
 median_caf = df["Caffeine (mg)"].median()
 hi_onset = df[df["Caffeine (mg)"] >= median_caf]["Sleep Onset Time (minutes)"]
-lo_onset = df[df["Caffeine (mg)"] <  median_caf]["Sleep Onset Time (minutes)"]
+lo_onset = df[df["Caffeine (mg)"] < median_caf]["Sleep Onset Time (minutes)"]
 t_stat, p_val = ttest_ind(hi_onset, lo_onset, equal_var=False)
 print(f"\nT-test: High vs Low Caffeine — Sleep Onset: t={t_stat:.2f}, p={p_val:.3f}")
 
 # ============================================================
 # 5 — MULTIPLE REGRESSION (Sleep Onset)
 # ============================================================
-X = df[["Caffeine (mg)", "Social Media Usage (minutes)",
-        "Cigarettes", "Step Count"]]
+X = df[["Caffeine (mg)", "Social Media Usage (minutes)", "Cigarettes", "Step Count"]]
 X = sm.add_constant(X)
 y = df["Sleep Onset Time (minutes)"]
 
@@ -121,3 +116,29 @@ corr_path = "sleep_corr_matrix.csv"
 df[num_cols].corr().to_csv(corr_path)
 print(f"\nCorrelation matrix saved to '{corr_path}'.")
 print("Working directory:", os.getcwd())
+
+# ============================================================
+# 7 — FEATURE ENGINEERING & MACHINE LEARNING TASK
+# ============================================================
+# Create a binary column for high social media usage
+median_smu = df["Social Media Usage (minutes)"].median()
+df["High_SocialMedia"] = (df["Social Media Usage (minutes)"] > median_smu).astype(int)
+
+# Categorize sleep quality as high/low (based on median)
+median_quality = df["Sleep Quality"].median()
+df["SleepQuality_Class"] = (df["Sleep Quality"] > median_quality).astype(int)  # 1=High, 0=Low
+
+# Logistic Regression to predict sleep quality class
+X_ml = df[["Caffeine (mg)", "Cigarettes", "Step Count", "High_SocialMedia"]]
+y_ml = df["SleepQuality_Class"]
+
+X_train, X_test, y_train, y_test = train_test_split(X_ml, y_ml, test_size=0.25, random_state=42)
+model_lr = LogisticRegression()
+model_lr.fit(X_train, y_train)
+y_pred = model_lr.predict(X_test)
+
+# Results
+acc = accuracy_score(y_test, y_pred)
+cm = confusion_matrix(y_test, y_pred)
+print(f"\nLogistic Regression Accuracy: {acc:.2f}")
+print("Confusion Matrix:\n", cm)

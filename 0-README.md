@@ -62,7 +62,7 @@ Python · Pandas · Matplotlib / Seaborn · SciPy / Statsmodels · scikit-learn 
 | 3   | Cigarette count is uncorrelated with sleep quality. | More cigarettes **lower** sleep quality. | Pearson/Spearman correlation |
 | 4   | Step count has no effect on sleep-onset or quality. | More steps **improve** sleep metrics. | Linear regression: Sleep ~ Steps + covariates |
 
-> If any p-value < 0.05, H₀ will be rejected for that relationship. Multiple comparison corrections (Benjamini–Hochberg) are applied to avoid false positives.
+> If any p-value < 0.05, the null hypothesis (H₀) was rejected for that test.
 
 ---
 
@@ -85,7 +85,6 @@ A logistic regression model was trained to predict whether sleep quality was “
 ---
 
 ## Results & Interpretation  
-*(current 30-day sample; rerun notebook after logging new data)*
 
 | Habit         | Statistical Result                                    | Interpretation                                          |
 |---------------|------------------------------------------------------|---------------------------------------------------------|

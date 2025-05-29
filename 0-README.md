@@ -104,6 +104,17 @@ A logistic regression model was trained to predict whether sleep quality was “
 - The ML model could be improved with more data and alternative algorithms.
 
 ---
+## AI Usage Statement
+
+This project used OpenAI ChatGPT-4 for guidance on:
+- Report structuring
+- Feature engineering and machine learning implementation (scikit-learn syntax)
+- Example prompts:
+    - "How do I add a logistic regression model to classify sleep quality using pandas and scikit-learn?"
+    - "How can I explain feature engineering steps in a data science report?"
+
+All code and analysis were reviewed and adapted by the author.
+
 
 
 
